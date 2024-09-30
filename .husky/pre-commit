@@ -1,0 +1,30 @@
+# Husky digunakan agar konfigurasi yang telah di set di eslint dan prettier tidak ada error sebelum kode dicommit ke github. Hal ini agar jika repo digithub auto deploy(CI/CD) maka memastikan bahwa codingan di local berjalan dengan lancar tidak ada error
+echo 'Styling. testing and building your projecy before commit'
+
+# check Prettier
+npm run check-format || 
+{
+    echo 'Prettier Check vailed,Run npm run format,add changes and try commit again'
+    false
+}
+
+# check Eslint
+npm run check-lint || {
+    echo 'Eslint check failed, Make the required changes listen above. add changes and try commit again'
+    false
+}
+
+# Check tsconfig
+npm run check-types || {
+    echo 'Failed type check. Make the required changes listen above. add changes and try commit again'
+    false
+}
+
+# Build apps
+npm run build || {
+    echo 'Your build failed, view the error above'
+    false
+
+}
+
+echo "Success Commit" 
