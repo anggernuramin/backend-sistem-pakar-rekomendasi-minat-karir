@@ -1,6 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express'
 import cors from 'cors'
-import routes from '@routes/index'
+import routes from './routes'
 
 const app: Application = express()
 const port: number = 3000
