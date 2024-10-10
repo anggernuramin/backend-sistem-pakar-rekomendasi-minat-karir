@@ -4,8 +4,9 @@ import { successResponse, errorResponse } from '../helpers/apiResponse'
 import { validationResult } from 'express-validator'
 
 type ValidationResultError = {
-  [string: string]: [string]
+  [key: string]: '' // key-nya adalah nama field, dan value adalah array pesan error
 }
+
 const skills: ISkill[] = [
   {
     id: 1,
@@ -44,10 +45,8 @@ export const addSkill = async (req: Request, res: Response): Promise<any> => {
         validationErrors[error.path] = error.msg
       }
     })
-
-    return res
-      .status(400)
-      .json({ success: false, statusCode: 404, message: 'Gagal menambah skill', inputError: validationErrors })
+    // Gunakan errorResponse untuk mengirim response dengan status 400 dan validasi error
+    return errorResponse(res, 400, 'Validasi gagal', validationErrors)
   }
 
   const { name, description } = req.body

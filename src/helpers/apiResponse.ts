@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Di sini, T adalah tipe data yang generik, yang artinya kita tidak tahu sebelumnya apa tipe data yang akan dikembalikan (data bisa berupa array, objek, string, dll.). Dengan menggunakan T, kita bisa mendefinisikan bahwa:
 
 // data: T: Argumen data bisa berupa tipe data apa pun (misalnya, array, objek, dll.), dan tipe data ini tetap aman secara tipe.
@@ -10,13 +11,14 @@ export interface ISuccesResponse<T> {
   statusCode: number
   message: string
   data: T
+  error?: null
 }
 
 export interface IErrorResponse {
   success: false
   statusCode: number
   message: string
-  data: null
+  error?: any
 }
 
 // helper success response
@@ -35,11 +37,16 @@ export const successResponse = <T>(
 }
 
 // helper error response
-export const errorResponse = (res: Response, statusCode: number, message: string): Response<IErrorResponse> => {
+export const errorResponse = (
+  res: Response,
+  statusCode: number,
+  message: string,
+  error?: any
+): Response<IErrorResponse> => {
   return res.status(statusCode).json({
     success: false,
     statusCode,
     message,
-    data: null
+    error
   })
 }

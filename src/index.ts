@@ -3,7 +3,7 @@ import cors from 'cors'
 import routes from './routes'
 
 const app: Application = express()
-const port: number = 3000
+const port: number = 3001
 
 // middleware
 app.use(express.json())
