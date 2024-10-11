@@ -6,12 +6,18 @@
 
 import { Response } from 'express'
 import { IPaginationMeta } from './pagination'
+
+interface IToken {
+  accessToken: string
+  refreshToken: string
+}
 // type success response
 export interface ISuccesResponse<T> {
   success: true
   statusCode: number
   message: string
   data: T
+  token?: IToken
   error?: null
   meta?: IPaginationMeta
 }
@@ -29,14 +35,32 @@ export const successResponse = <T>(
   statusCode: number,
   message: string,
   data: T,
-  meta?: IPaginationMeta
+  meta?: IPaginationMeta,
+  token?: IToken
 ): Response<ISuccesResponse<T>> => {
   return res.status(statusCode).json({
     success: true,
     statusCode,
     message,
     data,
-    meta
+    meta,
+    token
+  })
+}
+
+export const successResponseLogin = <T>(
+  res: Response,
+  statusCode: number,
+  message: string,
+  data: T,
+  token: IToken
+): Response<ISuccesResponse<T>> => {
+  return res.status(statusCode).json({
+    success: true,
+    statusCode,
+    message,
+    data,
+    token
   })
 }
 
