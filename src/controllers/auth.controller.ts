@@ -2,7 +2,7 @@ import { validationResult } from 'express-validator'
 import { errorResponse, successResponse, successResponseLogin } from '../helpers/apiResponse'
 import { ValidationResultError } from '../interfaces/validation.interface'
 // import { v4 as uuidv4 } from 'uuid'
-import { checkPassword, generateToken, hashingPassword } from '../utils/password'
+import { checkPassword, generateToken, hashingPassword } from '../services/password-service'
 import { prisma } from '../config/environment'
 import { Request, Response } from 'express'
 import { IUser } from '../interfaces/user.interface'
@@ -62,7 +62,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 
     // generate token jika email dan passowrd benar
     const accessToken = generateToken(
-      { id: user.id },
+      { id: user.id, role: user.role },
       {
         expiresIn: '1d'
       }
@@ -71,7 +71,8 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     // refresh token
     const refreshToken = generateToken(
       {
-        id: user.id
+        id: user.id,
+        role: user.role
       },
       {
         expiresIn: '7d'

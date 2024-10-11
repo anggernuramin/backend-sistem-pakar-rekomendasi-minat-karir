@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import routes from './routes'
+import { authorizationToken } from './helpers/authorization'
 
 const app: Application = express()
 const port: number = 3001
@@ -14,6 +15,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Access-Control-Allow-Headers', '*')
   next()
 })
+
+// middleware untuk access token dan otorisasi saat user call endpoint/api
+app.use(authorizationToken)
 
 // routes
 routes(app)

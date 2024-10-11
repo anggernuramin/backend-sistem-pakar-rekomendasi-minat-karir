@@ -44,3 +44,33 @@ export const getAllUsers = async (req: Request, res: Response): Promise<any> => 
     return errorResponse(res, 500, 'Failed get all users')
   }
 }
+
+export const addUser = async (req: Request, res: Response): Promise<any> => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    const validationErrors: ValidationResultError = {}
+    errors.array().forEach((error) => {
+      if (error.type === 'field') {
+        validationErrors[error.path] = error.msg
+      }
+    })
+    return errorResponse(res, 400, 'Validation error', validationErrors)
+  }
+
+  try {
+    await prisma.user.create({ data: req.body })
+    return successResponse(res, 201, 'Success add user', [])
+  } catch (error: any) {
+    // Handle Prisma error karena title diset @unique di database
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Email yang anda gunakan sudah ada terdaftar di database, gunakan email yang lain',
+        data: null
+      })
+    }
+    return errorResponse(res, 500, 'Failed add user')
+  }
+}
