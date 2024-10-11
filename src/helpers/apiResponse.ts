@@ -5,6 +5,7 @@
 // SuccessResponse<T>: Menandakan bahwa properti data di dalam response juga akan mengikuti tipe yang sama dengan T.
 
 import { Response } from 'express'
+import { IPaginationMeta } from './pagination'
 // type success response
 export interface ISuccesResponse<T> {
   success: true
@@ -12,6 +13,7 @@ export interface ISuccesResponse<T> {
   message: string
   data: T
   error?: null
+  meta?: IPaginationMeta
 }
 
 export interface IErrorResponse {
@@ -26,13 +28,15 @@ export const successResponse = <T>(
   res: Response,
   statusCode: number,
   message: string,
-  data: T
+  data: T,
+  meta?: IPaginationMeta
 ): Response<ISuccesResponse<T>> => {
   return res.status(statusCode).json({
     success: true,
     statusCode,
     message,
-    data
+    data,
+    meta
   })
 }
 

@@ -2,18 +2,8 @@ import { Request, Response } from 'express'
 import { ISkill } from '../interfaces/skill.interface'
 import { successResponse, errorResponse } from '../helpers/apiResponse'
 import { validationResult } from 'express-validator'
-import { prisma } from '../config/environment'
 type ValidationResultError = {
   [key: string]: '' // key-nya adalah nama field, dan value adalah array pesan error
-}
-
-interface IUser {
-  id: string
-  name: string
-  email: string
-  password: string
-  role: string
-  image?: string | null
 }
 
 const skills: ISkill[] = [
@@ -36,8 +26,7 @@ const skills: ISkill[] = [
 
 export const getSkills = async (req: Request, res: Response): Promise<any> => {
   try {
-    const users: IUser[] = await prisma.user.findMany()
-    successResponse<IUser[]>(res, 200, 'Success get all skills', users)
+    successResponse<ISkill[]>(res, 200, 'Success get all skills', skills)
   } catch (error) {
     console.log('🚀 ~ getSkills ~ error:', error)
     errorResponse(res, 500, "Can't get skills")

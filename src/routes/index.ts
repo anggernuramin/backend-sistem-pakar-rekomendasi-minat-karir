@@ -1,8 +1,12 @@
 import { Application, Router } from 'express'
 import { SkillRouter } from './skill.router'
+import { UserRouter } from './user.router'
 
 // main router
-const _routes: Array<[String, Router]> = [['/api/skills', SkillRouter]]
+const _routes: Array<[String, Router]> = [
+  ['/api/skills', SkillRouter],
+  ['/api/users', UserRouter]
+]
 
 const routes = (app: Application) => {
   _routes.forEach((route: [any, Router]) => {
