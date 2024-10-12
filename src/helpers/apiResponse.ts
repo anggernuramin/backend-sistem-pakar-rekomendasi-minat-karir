@@ -9,7 +9,6 @@ import { IPaginationMeta } from './pagination'
 
 interface IToken {
   accessToken: string
-  refreshToken: string
 }
 // type success response
 export interface ISuccesResponse<T> {

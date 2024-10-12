@@ -12,8 +12,8 @@ export const checkPassword = (userInputPassword: string, password: string) => {
   return bcrypt.compareSync(userInputPassword, password)
 }
 
-// generate token
-export const generateToken = (payload: Object, options?: jwt.SignOptions | undefined) => {
+// create token
+export const createToken = (payload: Object, options?: jwt.SignOptions | undefined) => {
   // jwt private key untuk membuat token
   return jwt.sign(payload, environment.jwt_private, {
     ...options,
@@ -21,8 +21,8 @@ export const generateToken = (payload: Object, options?: jwt.SignOptions | undef
   })
 }
 
-// verifikasi token
-export const verifyToken = (token: string) => {
+// verifikasi token / check token apakah valid atau tidak
+export const checkToken = (token: string) => {
   try {
     // cek token apakah valid dengan key public
     const decoded = jwt.verify(token, environment.jwt_public)

@@ -12,7 +12,7 @@ export const requireClient = (req: Request, res: Response, next: NextFunction): 
 }
 
 export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
-  // mengambil user yang sedang login(yaitu valuenya mengambil value dari headers token jwt)
+  // mengambil user yang sedang login(yaitu valuenya mengambil value dari headers token jwt) yang telah dipasang di index.ts use(authorizationToken)
   const user = res.locals.user
   //   handle error ketika user tidak punya token
   if (!user) {

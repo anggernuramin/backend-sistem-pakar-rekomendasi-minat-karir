@@ -1,5 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import routes from './routes'
 import { authorizationToken } from './helpers/authorization'
 
@@ -16,9 +17,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
-// middleware untuk access token dan otorisasi saat user call endpoint/api
+// middleware untuk access token/get token dan otorisasi saat user call endpoint/api
 app.use(authorizationToken)
-
+// middleware cookie Parsing header Cookie dan isi req.cookies dengan value dari cookie (res.cookie) di browser
+app.use(cookieParser())
 // routes
 routes(app)
 

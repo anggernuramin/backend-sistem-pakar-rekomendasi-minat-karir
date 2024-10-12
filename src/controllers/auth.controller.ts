@@ -2,7 +2,7 @@ import { validationResult } from 'express-validator'
 import { errorResponse, successResponse, successResponseLogin } from '../helpers/apiResponse'
 import { ValidationResultError } from '../interfaces/validation.interface'
 // import { v4 as uuidv4 } from 'uuid'
-import { checkPassword, generateToken, hashingPassword } from '../services/password-service'
+import { checkPassword, createToken, hashingPassword, checkToken } from '../services/password-service'
 import { prisma } from '../config/environment'
 import { Request, Response } from 'express'
 import { IUser } from '../interfaces/user.interface'
@@ -61,7 +61,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     }
 
     // generate token jika email dan passowrd benar
-    const accessToken = generateToken(
+    const accessToken = createToken(
       { id: user.id, role: user.role },
       {
         expiresIn: '1d'
@@ -69,7 +69,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     )
 
     // refresh token
-    const refreshToken = generateToken(
+    const refreshToken = createToken(
       {
         id: user.id,
         role: user.role
@@ -79,13 +79,59 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       }
     )
 
+    // simpan refresh token di cookie browser
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // Agar cookie tidak dapat diakses dari JavaScript
+      secure: process.env.NODE_ENV === 'production', // Hanya untuk HTTPS di production
+      sameSite: 'strict', // Prevent CSRF attacks
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 hari
+    })
+
     const token = {
-      accessToken,
-      refreshToken
+      accessToken
     }
 
     successResponseLogin<IUser[]>(res, 201, 'User berhasil login', user, token)
   } catch (error: any) {
     errorResponse(res, 500, error.message)
+  }
+}
+
+export const refreshToken = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const refreshToken = req.cookies.refreshToken
+    if (!refreshToken) {
+      return errorResponse(res, 401, 'Refresh token tidak tersedia', [])
+    }
+    const verifiedToken = checkToken(refreshToken)
+
+    // Pengecekan apakah token valid, tidak expired, dan decoded tidak null dari function checkToken
+    if (!verifiedToken.valid || verifiedToken.expired || !verifiedToken.decoded) {
+      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', [])
+    }
+    // Pastikan verifiedToken.decoded adalah objek dengan id
+    const userId = (verifiedToken.decoded as any).id
+    if (!userId) {
+      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', [])
+    }
+
+    const user: any = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return errorResponse(res, 401, 'User tidak ditemukan', [])
+    }
+
+    // Buat access baru ketika user dengan id yang didapat dari encode token ada
+    const newAccesToken = createToken(
+      {
+        id: user.id,
+        role: user.role
+      },
+      {
+        expiresIn: '1d'
+      }
+    )
+    successResponseLogin<IUser[]>(res, 200, 'Token berhasil diperbarui', user, { accessToken: newAccesToken })
+  } catch (error: any) {
+    return errorResponse(res, 500, error.message)
   }
 }
