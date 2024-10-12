@@ -1,5 +1,4 @@
-export interface ISkill {
-  id: number
+export interface IKeahlian {
   name: string
   description: string
 }

@@ -1,13 +1,13 @@
 import { Application, Router } from 'express'
-import { SkillRouter } from './skill.router'
 import { UserRouter } from './user.router'
 import { AuthRouter } from './auth.router'
+import { KeahlianRouter } from './keahlian.router'
 
 // main router
 const _routes: Array<[String, Router]> = [
-  ['/api/skills', SkillRouter],
   ['/api/users', UserRouter],
-  ['/api/auth', AuthRouter]
+  ['/api/auth', AuthRouter],
+  ['/api/keahlian', KeahlianRouter]
 ]
 
 const routes = (app: Application) => {

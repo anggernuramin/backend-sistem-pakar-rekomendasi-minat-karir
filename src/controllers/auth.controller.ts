@@ -2,7 +2,7 @@ import { validationResult } from 'express-validator'
 import { errorResponse, successResponse, successResponseLogin } from '../helpers/apiResponse'
 import { ValidationResultError } from '../interfaces/validation.interface'
 // import { v4 as uuidv4 } from 'uuid'
-import { checkPassword, createToken, hashingPassword, checkToken } from '../services/password-service'
+import { checkPassword, createToken, hashingPassword, checkToken } from '../services/password.service'
 import { prisma } from '../config/environment'
 import { Request, Response } from 'express'
 import { IUser } from '../interfaces/user.interface'
@@ -25,12 +25,38 @@ export const registerUser = async (req: Request, res: Response): Promise<any> =>
   }
 
   try {
+    // Pastikan password sudah di-hashing
     if (req.body && req.body.password) {
-      req.body.password = `${hashingPassword(req?.body?.password)}`
+      req.body.password = hashingPassword(req.body.password)
     }
+
+    // Ubah nilai role menjadi huruf kecil agar sesuai dengan enum di Prisma
+    if (req.body.role) {
+      req.body.role = req.body.role.toLowerCase()
+    }
+
+    // Cek apakah role yang diberikan valid
+    if (!['admin', 'client'].includes(req.body.role)) {
+      return res.status(400).send({
+        success: false,
+        statusCode: 400,
+        message: 'Role yang diberikan tidak valid. Hanya "admin" atau "client" yang diizinkan.',
+        data: null
+      })
+    }
+
     await prisma.user.create({ data: req.body })
     successResponse(res, 201, 'Register berhasil dan User berhasil ditambahkan', [])
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Email yang anda gunakan sudah ada terdaftar di database, gunakan email yang lain',
+        data: null
+      })
+    }
     errorResponse(res, 500, error.message)
   }
 }

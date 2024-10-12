@@ -3,11 +3,8 @@ import { prisma } from '../config/environment'
 import { paginate } from '../helpers/pagination'
 import { errorResponse, successResponse } from '../helpers/apiResponse'
 import { IUser } from '../interfaces/user.interface'
+import { ValidationResultError } from '../interfaces/validation.interface'
 import { validationResult } from 'express-validator'
-
-type ValidationResultError = {
-  [key: string]: ''
-}
 
 export const getAllUsers = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi

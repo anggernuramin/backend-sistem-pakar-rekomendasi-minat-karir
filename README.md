@@ -8,6 +8,8 @@ di file .env dibuatkan variabel DATABASE_URL=.....
 5. jalankan project express ``npm run dev``
 6. buka prisma studio untuk melihat isi tabel ``npx prisma studio`` default post 5500
 
-<!-- Jika terdapat perubahan di schema.prisma  -->
+<!-- Pastikan buat migrasi baru ketika ingin menmbah tabel di postgre, agar value di tabel sebelumnya yang telah dibuat tidak hilang -->
+<!-- Jika terdapat perubahan di schema.prisma(tabel postgre)  -->
 1. maka buat migrastion ulang ``npx prisma migrate dev nama_migrasi`` 
 2. update db agar sync dengan migrasi prisma, (misal di schema menambahkan tabel maka perlu push ke postgres agar update dengan perintah) ``npx prisma db push``
+<!-- setalh dbpush tetapi ingin update tabe yang telah dibuat migrasi sebelumnay cukup lakuakn db push -->

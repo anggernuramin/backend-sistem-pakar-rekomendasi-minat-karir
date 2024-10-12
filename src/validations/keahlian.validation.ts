@@ -1,6 +1,6 @@
 import { body } from 'express-validator'
 
-export const validateSkill = [
+export const validateKeahlian = [
   body('name')
     .notEmpty()
     .withMessage('Skill wajib diisi.')
