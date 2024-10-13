@@ -1,7 +1,6 @@
 import { validationResult } from 'express-validator'
 import { errorResponse, successResponse, successResponseLogin } from '../helpers/apiResponse'
 import { ValidationResultError } from '../interfaces/validation.interface'
-// import { v4 as uuidv4 } from 'uuid'
 import { checkPassword, createToken, hashingPassword, checkToken } from '../services/password.service'
 import { prisma } from '../config/environment'
 import { Request, Response } from 'express'
@@ -53,7 +52,7 @@ export const registerUser = async (req: Request, res: Response): Promise<any> =>
       return res.status(409).send({
         success: false,
         statusCode: 409,
-        message: 'Email yang anda gunakan sudah ada terdaftar di database, gunakan email yang lain',
+        message: 'Email yang anda gunakan sudah terdaftar di database, gunakan email yang lain',
         data: null
       })
     }
@@ -107,9 +106,9 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 
     // simpan refresh token di cookie browser
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true, // Agar cookie tidak dapat diakses dari JavaScript
-      secure: process.env.NODE_ENV === 'production', // Hanya untuk HTTPS di production
-      sameSite: 'strict', // Prevent CSRF attacks
+      // httpOnly: true, // Agar cookie tidak dapat diakses dari JavaScript
+      // secure: process.env.NODE_ENV === 'production', // Hanya untuk HTTPS di production
+      // sameSite: 'strict', // Prevent CSRF attacks
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 hari
     })
 

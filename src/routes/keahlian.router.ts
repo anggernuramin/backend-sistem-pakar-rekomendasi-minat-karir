@@ -18,5 +18,5 @@ KeahlianRouter.get('/:id', requireRoles(['client', 'admin']), getKeahlianById)
 
 // memasang 2 middleware yaitu requireAdmin dan validateKeahlian
 KeahlianRouter.post('/', validateKeahlian, requireRoles(['admin']), createKeahlian)
-KeahlianRouter.patch('/:id', validateKeahlian, requireRoles(['admin']), updateKeahlian)
+KeahlianRouter.put('/:id', validateKeahlian, requireRoles(['admin']), updateKeahlian)
 KeahlianRouter.delete('/:id', requireRoles(['admin']), deleteKeahlian)

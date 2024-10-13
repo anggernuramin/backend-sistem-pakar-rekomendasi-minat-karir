@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { IKeahlian } from '../interfaces/keahlian.interface'
+import { IKeahlian, INameKeahlianResponse } from '../interfaces/keahlian.interface'
 import { successResponse, errorResponse } from '../helpers/apiResponse'
 import { validationResult } from 'express-validator'
 import { prisma } from '../config/environment'
@@ -33,7 +33,21 @@ export const getAllKeahlian = async (req: Request, res: Response): Promise<any> 
       take: limit
     })
 
-    return successResponse<IKeahlian[]>(res, 200, 'Success get all keahlian', keahlians, paginationMeta)
+    const responsiveNames: INameKeahlianResponse[] = keahlians.map((keahlian) => {
+      return {
+        id: keahlian.id,
+        nameKeahlian: keahlian.name,
+        descriptionKeahlian: keahlian.description
+      }
+    })
+
+    return successResponse<INameKeahlianResponse[]>(
+      res,
+      200,
+      'Success get all keahlian',
+      responsiveNames,
+      paginationMeta
+    )
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed get all keahlian', error.message)
   }
