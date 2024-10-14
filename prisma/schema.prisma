@@ -33,3 +33,8 @@ model Keahlian {
   description String
 }
 
+model Minat {
+  id String @id @default(uuid())
+  name String
+}
+
