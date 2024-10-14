@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
-import { IKeahlian, INameKeahlianResponse } from '../interfaces/keahlian.interface'
 import { successResponse, errorResponse } from '../helpers/apiResponse'
 import { validationResult } from 'express-validator'
 import { prisma } from '../config/environment'
 import { checkDataById } from '../services/checkDataById.service'
 import { ValidationResultError } from '../interfaces/validation.interface'
 import { paginate } from '../helpers/pagination'
+import { IMinat, INameMinatResponse } from '../interfaces/minat.interface'
 
-export const getAllKeahlian = async (req: Request, res: Response): Promise<any> => {
+export const getAllMinat = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -23,52 +23,45 @@ export const getAllKeahlian = async (req: Request, res: Response): Promise<any> 
   }
 
   try {
-    const totalKeahlian = await prisma.keahlian.count()
+    const totalMinat = await prisma.minat.count()
     // Ambil nilai pagination dari helper paginate
-    const { skip, limit, paginationMeta } = paginate(req, totalKeahlian)
+    const { skip, limit, paginationMeta } = paginate(req, totalMinat)
 
     // Ambil data user berdasarkan pagination
-    const keahlians = await prisma.keahlian.findMany({
+    const minats = await prisma.minat.findMany({
       skip,
       take: limit
     })
 
-    const responsiveNames: INameKeahlianResponse[] = keahlians.map((keahlian) => {
+    const responsiveNames: INameMinatResponse[] = minats.map((minat) => {
       return {
-        id: keahlian.id,
-        nameKeahlian: keahlian.name,
-        descriptionKeahlian: keahlian.description
+        id: minat.id,
+        nameMinat: minat.name
       }
     })
 
-    return successResponse<INameKeahlianResponse[]>(
-      res,
-      200,
-      'Success get all keahlian',
-      responsiveNames,
-      paginationMeta
-    )
+    return successResponse<INameMinatResponse[]>(res, 200, 'Success get all minat', responsiveNames, paginationMeta)
   } catch (error: any) {
-    return errorResponse(res, 500, 'Failed get all keahlian', error.message)
+    return errorResponse(res, 500, 'Failed get all minat', error.message)
   }
 }
 
-export const getKeahlianById = async (req: Request, res: Response): Promise<any> => {
+export const getMinatById = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = req.params.id
-    const keahlian = await checkDataById(id, 'keahlian')
+    const minat = await checkDataById(id, 'minat')
 
-    if (!keahlian) {
-      return errorResponse(res, 404, 'Keahlian not found')
+    if (!minat) {
+      return errorResponse(res, 404, 'Minat not found')
     }
 
-    return successResponse<any>(res, 200, 'Success get keahlian', keahlian)
+    return successResponse<IMinat>(res, 200, 'Success get keahlian', minat)
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed get keahlian', error.message)
   }
 }
 
-export const createKeahlian = async (req: Request, res: Response): Promise<any> => {
+export const createMinat = async (req: Request, res: Response): Promise<any> => {
   // Validasi request body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -83,22 +76,21 @@ export const createKeahlian = async (req: Request, res: Response): Promise<any> 
     return errorResponse(res, 400, 'Validasi gagal', validationErrors)
   }
 
-  const { name, description } = req.body
+  const { name } = req.body
   try {
-    await prisma.keahlian.create({
+    await prisma.minat.create({
       data: {
-        name,
-        description
+        name
       }
     })
 
-    return successResponse<IKeahlian[]>(res, 201, 'Keahlian berhasil ditambahkan', [])
+    return successResponse<IMinat[]>(res, 201, 'Minat berhasil ditambahkan', [])
   } catch (error: any) {
-    return errorResponse(res, 500, 'Gagal menambah keahlian', error.message)
+    return errorResponse(res, 500, 'Gagal menambah minat', error.message)
   }
 }
 
-export const updateKeahlian = async (req: Request, res: Response): Promise<any> => {
+export const updateMinat = async (req: Request, res: Response): Promise<any> => {
   // Validasi request body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -115,42 +107,41 @@ export const updateKeahlian = async (req: Request, res: Response): Promise<any> 
 
   try {
     const id = req.params.id
-    const keahlian = await checkDataById(id, 'keahlian')
-    if (!keahlian) {
-      return errorResponse(res, 404, 'Keahlian not found')
+    const minat = await checkDataById(id, 'minat')
+    if (!minat) {
+      return errorResponse(res, 404, 'Minat not found')
     }
 
-    const { name, description } = req.body
-    const newKeahlian = await prisma.keahlian.update({
+    const { name } = req.body
+    const newMinat = await prisma.minat.update({
       where: {
         id
       },
       data: {
-        name,
-        description
+        name
       }
     })
 
-    return successResponse<IKeahlian>(res, 200, 'Success update keahlian', newKeahlian)
+    return successResponse<IMinat>(res, 200, 'Success update minat', newMinat)
   } catch (error: any) {
-    return errorResponse(res, 500, 'Failed update keahlian', error.message)
+    return errorResponse(res, 500, 'Failed update minat', error.message)
   }
 }
 
-export const deleteKeahlian = async (req: Request, res: Response): Promise<any> => {
+export const deleteMinat = async (req: Request, res: Response): Promise<any> => {
   const id = req.params.id
-  const keahlian = await checkDataById(id, 'keahlian')
-  if (!keahlian) {
-    return errorResponse(res, 404, 'Keahlian not found')
+  const minat = await checkDataById(id, 'minat')
+  if (!minat) {
+    return errorResponse(res, 404, 'Minat not found')
   }
   try {
-    await prisma.keahlian.delete({
+    await prisma.minat.delete({
       where: {
         id
       }
     })
-    return successResponse<IKeahlian[]>(res, 200, 'Success delete keahlian', [])
+    return successResponse<IMinat[]>(res, 200, 'Success delete minat', [])
   } catch (error: any) {
-    return errorResponse(res, 500, 'Failed delete keahlian', error.message)
+    return errorResponse(res, 500, 'Failed delete minat', error.message)
   }
 }

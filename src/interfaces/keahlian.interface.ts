@@ -1,4 +1,5 @@
 export interface IKeahlian {
+  id: string
   name: string
   description: string
 }

@@ -12,6 +12,13 @@ export const checkDataById = async (id: string, namaTabel: string) => {
           }
         })
         break
+      case 'minat':
+        data = await prisma.minat.findUnique({
+          where: {
+            id
+          }
+        })
+        break
       default:
         return null
     }

@@ -6,7 +6,7 @@ export const requireRoles = (allowedRoles: string[]) => {
     const user = res.locals.user
 
     if (!user) {
-      errorResponse(res, 401, 'For Bidden || Anda harus login terlebih dahulu')
+      errorResponse(res, 401, 'Token tidak valid || Anda harus login terlebih dahulu')
       return
     }
 
