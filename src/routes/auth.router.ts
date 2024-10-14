@@ -6,4 +6,4 @@ export const AuthRouter: Router = Router()
 
 AuthRouter.post('/register', validateRegister, registerUser)
 AuthRouter.post('/login', validateLogin, loginUser)
-AuthRouter.get('/refresh-token', refreshToken)
+AuthRouter.post('/refresh-token', refreshToken)

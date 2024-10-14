@@ -89,7 +89,8 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     const accessToken = createToken(
       { id: user.id, role: user.role },
       {
-        expiresIn: '1d'
+        // 1 menit
+        expiresIn: '1m'
       }
     )
 
@@ -106,9 +107,9 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 
     // simpan refresh token di cookie browser
     res.cookie('refreshToken', refreshToken, {
-      // httpOnly: true, // Agar cookie tidak dapat diakses dari JavaScript
-      // secure: process.env.NODE_ENV === 'production', // Hanya untuk HTTPS di production
-      // sameSite: 'strict', // Prevent CSRF attacks
+      httpOnly: false, // sesuaikan jenis network http atau https
+      secure: false, // Hanya untuk HTTPS di production
+      sameSite: 'strict', // Prevent CSRF attacks
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 hari
     })
 
@@ -116,7 +117,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       accessToken
     }
 
-    successResponseLogin<IUser[]>(res, 201, 'User berhasil login', user, token)
+    successResponseLogin<IUser[]>(res, 200, 'User berhasil login', user, token)
   } catch (error: any) {
     errorResponse(res, 500, error.message)
   }
@@ -125,6 +126,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 export const refreshToken = async (req: Request, res: Response): Promise<any> => {
   try {
     const refreshToken = req.cookies.refreshToken
+
     if (!refreshToken) {
       return errorResponse(res, 401, 'Refresh token tidak tersedia', [])
     }
@@ -134,6 +136,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     if (!verifiedToken.valid || verifiedToken.expired || !verifiedToken.decoded) {
       return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', [])
     }
+
     // Pastikan verifiedToken.decoded adalah objek dengan id
     const userId = (verifiedToken.decoded as any).id
     if (!userId) {

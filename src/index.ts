@@ -45,12 +45,6 @@ import { authorizationToken } from './helpers/authorization'
 const app: Application = express()
 const port: number = 3000
 
-// Middleware untuk menangani otorisasi dan parsing token
-app.use(authorizationToken)
-
-// Middleware untuk parsing cookies
-app.use(cookieParser())
-
 // Aktifkan parsing JSON
 app.use(express.json())
 
@@ -61,9 +55,14 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] // Izinkan metode HTTP
 }
 
+// Middleware untuk parsing cookies
+app.use(cookieParser())
+
 // Terapkan middleware CORS
 app.use(cors(corsOptions))
 
+// Middleware untuk menangani otorisasi dan parsing token
+app.use(authorizationToken)
 // Definisikan rute
 routes(app)
 
