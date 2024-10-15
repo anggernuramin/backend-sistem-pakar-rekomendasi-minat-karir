@@ -145,6 +145,15 @@ export const updateKeahlian = async (req: Request, res: Response): Promise<any> 
 
     return successResponse<IKeahlian>(res, 200, 'Success update keahlian', newKeahlian)
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Nama Keahlian yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        data: null
+      })
+    }
     return errorResponse(res, 500, 'Failed update keahlian', error.message)
   }
 }

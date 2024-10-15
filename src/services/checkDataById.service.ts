@@ -26,6 +26,18 @@ export const checkDataById = async (id: string, namaTabel: string) => {
           }
         })
         break
+      case 'basisAturan':
+        data = await prisma.basisAturan.findUnique({
+          where: {
+            id
+          },
+          include: {
+            karir: true,
+            minat: true,
+            keahlian: true
+          }
+        })
+        break
       default:
         return null
     }

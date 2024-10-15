@@ -1,11 +1,12 @@
 import { prisma } from '../config/environment'
-import { Keahlian, Minat, Karir } from '@prisma/client'
+import { Keahlian, Minat, Karir, BasisAturan } from '@prisma/client'
 
 // Type mapping for Prisma models
 type PrismaModels = {
   keahlian: Keahlian
   minat: Minat
   karir: Karir
+  basisAturan: BasisAturan
 }
 
 export const generateCustomId = async (modelName: keyof PrismaModels, prefix: string): Promise<string> => {

@@ -56,7 +56,7 @@ export const getMinatById = async (req: Request, res: Response): Promise<any> =>
       return errorResponse(res, 404, 'Minat not found')
     }
 
-    return successResponse<IMinat>(res, 200, 'Success get keahlian', minat)
+    return successResponse<any>(res, 200, 'Success get keahlian', minat)
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed get keahlian', error.message)
   }
@@ -136,6 +136,15 @@ export const updateMinat = async (req: Request, res: Response): Promise<any> => 
 
     return successResponse<IMinat>(res, 200, 'Success update minat', newMinat)
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Nama Minat yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        data: null
+      })
+    }
     return errorResponse(res, 500, 'Failed update minat', error.message)
   }
 }
@@ -143,6 +152,7 @@ export const updateMinat = async (req: Request, res: Response): Promise<any> => 
 export const deleteMinat = async (req: Request, res: Response): Promise<any> => {
   const id = req.params.id
   const minat = await checkDataById(id, 'minat')
+
   if (!minat) {
     return errorResponse(res, 404, 'Minat not found')
   }

@@ -144,6 +144,15 @@ export const updateKarir = async (req: Request, res: Response): Promise<any> => 
 
     return successResponse<IKarir>(res, 200, 'Success update karir', updateKarir)
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Nama Karir yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        data: null
+      })
+    }
     return errorResponse(res, 500, 'Failed update karir', error.message)
   }
 }
