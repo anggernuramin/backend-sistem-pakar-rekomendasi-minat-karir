@@ -19,6 +19,13 @@ export const checkDataById = async (id: string, namaTabel: string) => {
           }
         })
         break
+      case 'karir':
+        data = await prisma.karir.findUnique({
+          where: {
+            id
+          }
+        })
+        break
       default:
         return null
     }

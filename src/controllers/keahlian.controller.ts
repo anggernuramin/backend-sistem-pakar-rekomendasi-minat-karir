@@ -6,6 +6,7 @@ import { prisma } from '../config/environment'
 import { checkDataById } from '../services/checkDataById.service'
 import { ValidationResultError } from '../interfaces/validation.interface'
 import { paginate } from '../helpers/pagination'
+import { generateCustomId } from '../services/generateCustomId.service'
 
 export const getAllKeahlian = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
@@ -84,9 +85,11 @@ export const createKeahlian = async (req: Request, res: Response): Promise<any> 
   }
 
   const { name, description } = req.body
+  const id = await generateCustomId('keahlian', 'KEA')
   try {
     await prisma.keahlian.create({
       data: {
+        id,
         name,
         description
       }
@@ -94,6 +97,15 @@ export const createKeahlian = async (req: Request, res: Response): Promise<any> 
 
     return successResponse<IKeahlian[]>(res, 201, 'Keahlian berhasil ditambahkan', [])
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Nama Keahlian yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        data: null
+      })
+    }
     return errorResponse(res, 500, 'Gagal menambah keahlian', error.message)
   }
 }

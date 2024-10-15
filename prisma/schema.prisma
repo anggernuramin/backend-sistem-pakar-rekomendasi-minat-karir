@@ -1,40 +1,66 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+  // This is your Prisma schema file,
+  // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+  // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+  // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-generator client {
-  provider = "prisma-client-js"
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
 
-enum Role {
-  admin
-  client
-}
+  enum Role {
+    admin
+    client
+  }
 
-model User {
-  id String @id @default(uuid())
-  email String @unique
-  name String
-  password String
-  image String?
-  role Role
-}
+  model User {
+    id String @id 
+    email String @unique
+    name String
+    password String
+    image String?
+    role Role
+  }
 
-model Keahlian {
-  id String @id @default(uuid())
-  name String
-  description String
-}
+  model Keahlian {
+    id String @id 
+    name String @unique
+    description String
 
-model Minat {
-  id String @id @default(uuid())
-  name String
-}
+    basisAturan BasisAturan[]
+  }
+
+  model Minat {
+    id String @id 
+    name String @unique
+
+    basisAturan BasisAturan[]
+  }
+
+  model Karir {
+    id String @id 
+    name String @unique
+    description String
+    pengembangan_karir String?
+
+    basisAturan BasisAturan[]
+  }
+
+  model BasisAturan {
+    id        String    @id @default(uuid())
+    karirId   String
+    karir     Karir     @relation(fields: [karirId], references: [id])
+    keahlianId String
+    keahlian  Keahlian  @relation(fields: [keahlianId], references: [id])
+    minatId   String
+    minat     Minat     @relation(fields: [minatId], references: [id])
+
+    // Dengan menambahkan @@unique([karirId, keahlianId, minatId]), kita memastikan kombinasi karir, keahlian, dan minat yang sama tidak akan ada duplikasinya.
+    @@unique([karirId, keahlianId, minatId]) 
+  }
 

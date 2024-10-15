@@ -3,13 +3,15 @@ import { UserRouter } from './user.router'
 import { AuthRouter } from './auth.router'
 import { KeahlianRouter } from './keahlian.router'
 import { MinatRouter } from './minat.router'
+import { KarirRouter } from './karir.controller'
 
 // main router
 const _routes: Array<[String, Router]> = [
   ['/api/users', UserRouter],
   ['/api/auth', AuthRouter],
   ['/api/keahlian', KeahlianRouter],
-  ['/api/minat', MinatRouter]
+  ['/api/minat', MinatRouter],
+  ['/api/karir', KarirRouter]
 ]
 
 const routes = (app: Application) => {

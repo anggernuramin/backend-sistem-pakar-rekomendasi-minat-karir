@@ -6,6 +6,7 @@ import { checkDataById } from '../services/checkDataById.service'
 import { ValidationResultError } from '../interfaces/validation.interface'
 import { paginate } from '../helpers/pagination'
 import { IMinat, INameMinatResponse } from '../interfaces/minat.interface'
+import { generateCustomId } from '../services/generateCustomId.service'
 
 export const getAllMinat = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
@@ -76,16 +77,27 @@ export const createMinat = async (req: Request, res: Response): Promise<any> => 
     return errorResponse(res, 400, 'Validasi gagal', validationErrors)
   }
 
+  const id = await generateCustomId('minat', 'MIN')
   const { name } = req.body
   try {
     await prisma.minat.create({
       data: {
+        id,
         name
       }
     })
 
     return successResponse<IMinat[]>(res, 201, 'Minat berhasil ditambahkan', [])
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      return res.status(409).send({
+        success: false,
+        statusCode: 409,
+        message: 'Nama Minat yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        data: null
+      })
+    }
     return errorResponse(res, 500, 'Gagal menambah minat', error.message)
   }
 }
