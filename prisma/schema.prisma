@@ -52,7 +52,7 @@
   }
 
   model BasisAturan {
-    id        String    @id @default(uuid())
+    id        String    @id 
     karirId   String
     karir     Karir     @relation(fields: [karirId], references: [id])
     keahlianId String
@@ -60,7 +60,5 @@
     minatId   String
     minat     Minat     @relation(fields: [minatId], references: [id])
 
-    // Dengan menambahkan @@unique([karirId, keahlianId, minatId]), kita memastikan kombinasi karir, keahlian, dan minat yang sama tidak akan ada duplikasinya.
-    @@unique([karirId, keahlianId, minatId]) 
   }
 

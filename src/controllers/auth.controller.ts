@@ -163,3 +163,43 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     return errorResponse(res, 500, error.message)
   }
 }
+
+export const logoutUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    res.clearCookie('refreshToken')
+    successResponse(res, 200, 'Logout berhasil', [])
+  } catch (error: any) {
+    return errorResponse(res, 500, error.message)
+  }
+}
+
+export const checkUser = async (req: Request, res: Response): Promise<any> => {
+  const currentToken = req.body.accessToken
+
+  try {
+    if (!currentToken) {
+      return errorResponse(res, 401, 'Token tidak ada', [])
+    }
+    const validToken = checkToken(currentToken)
+
+    // Pengecekan apakah token valid, tidak expired, dan decoded tidak null dari function checkToken
+    if (!validToken.valid || validToken.expired || !validToken.decoded) {
+      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', [])
+    }
+
+    // Pastikan verifiedToken.decoded adalah objek dengan id
+    const userId = (validToken.decoded as any).id
+    if (!userId) {
+      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', [])
+    }
+
+    const dataUser: any = await prisma.user.findUnique({ where: { id: userId } })
+    if (!dataUser) {
+      return errorResponse(res, 401, 'User tidak ditemukan', [])
+    }
+
+    successResponse<IUser[]>(res, 200, 'User berhasil ditemukan', dataUser)
+  } catch (error: any) {
+    return errorResponse(res, 500, error.message)
+  }
+}
