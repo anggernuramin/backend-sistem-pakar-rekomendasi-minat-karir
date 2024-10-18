@@ -11,3 +11,12 @@ export interface IBasisAturan {
   minat: IMinat
   keahlian: IKeahlian
 }
+
+export interface IBasisAturanResponse {
+  id: string
+  name: string
+  description: string
+  pengembangan_karir: string | null
+  minat: { id: string; name: string }[]
+  keahlian: { id: string; name: string; description: string }[]
+}

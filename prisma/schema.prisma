@@ -25,6 +25,9 @@
     password String
     image String?
     role Role
+
+    konsultasi Konsultasi[]
+    historyKonsultasi HistoriKonsultasi[]
   }
 
   model Keahlian {
@@ -33,6 +36,8 @@
     description String
 
     basisAturan BasisAturan[]
+    historyKonsultasi HistoriKonsultasi[]
+
   }
 
   model Minat {
@@ -40,6 +45,8 @@
     name String @unique
 
     basisAturan BasisAturan[]
+    historyKonsultasi HistoriKonsultasi[]
+
   }
 
   model Karir {
@@ -52,15 +59,41 @@
   }
 
   model BasisAturan {
-    id        String    @id @default(uuid())
+    id        String    @id 
     karirId   String
     karir     Karir     @relation(fields: [karirId], references: [id])
     keahlianId String
     keahlian  Keahlian  @relation(fields: [keahlianId], references: [id])
     minatId   String
     minat     Minat     @relation(fields: [minatId], references: [id])
-
-    // Dengan menambahkan @@unique([karirId, keahlianId, minatId]), kita memastikan kombinasi karir, keahlian, dan minat yang sama tidak akan ada duplikasinya.
-    @@unique([karirId, keahlianId, minatId]) 
   }
+
+  model Konsultasi {
+    id String @id
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    hasil Json? // jika hasil tidak ada yang cocok maka null
+    createdAt DateTime @default(now())
+
+    historyKonsultasi HistoriKonsultasi[]
+
+  }
+
+
+// menyimpan minat dan keahlian yang dipilih user, dan menampilkan hasil konsultasi sesuai dengan id konsultasi
+ model HistoriKonsultasi {
+    id              String @id   
+    userId          String
+    minatId         String
+    keahlianId      String
+    konsultasiId    String
+    createdAt       DateTime  @default(now())
+
+    user            User      @relation(fields: [userId], references: [id])
+    konsultasi      Konsultasi @relation(fields: [konsultasiId], references: [id])
+    minat           Minat     @relation(fields: [minatId], references: [id])
+    keahlian        Keahlian  @relation(fields: [keahlianId], references: [id])
+}
+
+
 

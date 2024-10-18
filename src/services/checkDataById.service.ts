@@ -5,6 +5,13 @@ export const checkDataById = async (id: string, namaTabel: string) => {
     let data = null
 
     switch (namaTabel) {
+      case 'user':
+        data = await prisma.user.findUnique({
+          where: {
+            id
+          }
+        })
+        break
       case 'keahlian':
         data = await prisma.keahlian.findUnique({
           where: {
@@ -35,6 +42,30 @@ export const checkDataById = async (id: string, namaTabel: string) => {
             karir: true,
             minat: true,
             keahlian: true
+          }
+        })
+        break
+
+      case 'konsultasi':
+        data = await prisma.konsultasi.findUnique({
+          where: {
+            id
+          },
+          include: {
+            user: true
+          }
+        })
+        break
+      case 'historikonsultasi':
+        data = await prisma.historiKonsultasi.findUnique({
+          where: {
+            id
+          },
+          include: {
+            user: true,
+            minat: true,
+            keahlian: true,
+            konsultasi: true
           }
         })
         break

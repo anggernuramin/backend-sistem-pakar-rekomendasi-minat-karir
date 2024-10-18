@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { validatePagination } from '../validations/pagination.validation'
 import { requireRoles } from '../middlewares/auth.middleware'
 import {
   createBasisAturan,
@@ -9,6 +8,7 @@ import {
   updateBasisAturan
 } from '../controllers/basisAturan.controller'
 import { validateBasisAturan } from '../validations/basisAturan.validation'
+import { validatePagination } from '../validations/pagination.validation'
 
 export const BasisAturanRouter: Router = Router()
 
