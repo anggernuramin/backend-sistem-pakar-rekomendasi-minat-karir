@@ -24,12 +24,27 @@ export const getAllMinat = async (req: Request, res: Response): Promise<any> => 
   }
 
   try {
-    const totalMinat = await prisma.minat.count()
+    // Frontend: Gunakan encodeURIComponent() untuk mengencode query string sebelum mengirim permintaan
+    // encodeURIComponent(). Ini akan mengubah spasi menjadi %20 dan karakter khusus lainnya menjadi format yang aman
+    const searchQuery = req.query.search as string
+    const searchCondtion = searchQuery
+      ? {
+          OR: [
+            // insensitif akan mencari data dengan huruf besar dan kecil
+            { name: { contains: searchQuery, mode: 'insensitive' as const } } // ada keyword name artinya akan mencri berdasarkan keyword name
+          ]
+        }
+      : {}
+
+    const totalMinat = await prisma.minat.count({
+      where: searchCondtion
+    })
     // Ambil nilai pagination dari helper paginate
     const { skip, limit, paginationMeta } = paginate(req, totalMinat)
 
     // Ambil data user berdasarkan pagination
     const minats = await prisma.minat.findMany({
+      where: searchCondtion,
       skip,
       take: limit
     })

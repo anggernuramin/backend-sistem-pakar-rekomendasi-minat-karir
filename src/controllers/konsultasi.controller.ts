@@ -109,7 +109,7 @@ export const createKonsultasi = async (req: Request, res: Response): Promise<any
         ? Object.fromEntries(
             Object.entries(karirKecocokan).map(([karirId, totalCocok]) => [
               karirId,
-              (totalCocok / totalCocokanSemuaKarir) * 100 // Persentase kecocokan
+              Math.round((totalCocok / totalCocokanSemuaKarir) * 100) // Persentase kecocokan
             ])
           )
         : Object.fromEntries(

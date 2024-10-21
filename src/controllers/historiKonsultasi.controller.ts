@@ -135,6 +135,101 @@ export const getHistoriKonsultasiByUserId = async (req: Request, res: Response):
     // Ubah objek menjadi array
     const responseData = Object.values(groupedHistori)
 
+    return successResponse<any>(res, 200, 'Success get history', responseData[0])
+  } catch (error: any) {
+    return errorResponse(res, 500, 'Failed get history', error.message)
+  }
+}
+
+export const getAllHistoriKonsultasiByUserId = async (req: Request, res: Response): Promise<any> => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    const validationErrors: ValidationResultError = {}
+    errors.array().forEach((error) => {
+      if (error.type === 'field') {
+        validationErrors[error.path] = error.msg
+      }
+    })
+
+    return errorResponse(res, 400, 'Validation query param error', validationErrors)
+  }
+
+  try {
+    const id = req.params.id
+    const user = await checkDataById(id, 'user')
+
+    if (!user) {
+      return errorResponse(res, 404, 'User not found')
+    }
+
+    const historiKonsultasi = await prisma.historiKonsultasi.findMany({
+      where: {
+        userId: id
+      },
+      include: {
+        minat: true,
+        keahlian: true,
+        konsultasi: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    // Ambil semua data karir
+    const allKarir = await prisma.karir.findMany()
+
+    // Kelompokkan berdasarkan konsultasiId
+    const groupedHistori = historiKonsultasi.reduce((acc: any, current: any) => {
+      const { konsultasiId, minat, keahlian, konsultasi } = current
+
+      // Jika kelompok belum ada, buat kelompok baru
+      if (!acc[konsultasiId]) {
+        acc[konsultasiId] = {
+          konsultasiId,
+          hasil: [],
+          minat: [],
+          keahlian: [],
+          createdAt: konsultasi.createdAt
+        }
+      }
+
+      // Tambahkan hasil dengan nama karir, hindari duplikat
+      Object.entries(konsultasi.hasil).forEach(([karirId, persentase]) => {
+        // Cari nama karir berdasarkan karirId
+        const karir = allKarir.find((k: any) => k.id === karirId)
+        if (karir && !acc[konsultasiId].hasil.some((item: any) => item.id === karirId)) {
+          acc[konsultasiId].hasil.push({
+            id: karirId,
+            name: karir.name, // Mengganti kode karir dengan nama karir
+            persentase
+          })
+        }
+      })
+
+      // Tambahkan minat jika belum ada
+      if (!acc[konsultasiId].minat.some((item: any) => item.id === minat.id)) {
+        acc[konsultasiId].minat.push({
+          id: minat.id,
+          name: minat.name
+        })
+      }
+
+      // Tambahkan keahlian jika belum ada
+      if (!acc[konsultasiId].keahlian.some((item: any) => item.id === keahlian.id)) {
+        acc[konsultasiId].keahlian.push({
+          id: keahlian.id,
+          name: keahlian.name,
+          description: keahlian.description
+        })
+      }
+
+      return acc
+    }, {})
+
+    // Ubah objek menjadi array
+    const responseData = Object.values(groupedHistori)
+
     // Lakukan pagination pada hasil yang sudah dikelompokkan
     const totalData = responseData.length
     const { skip, limit, paginationMeta } = paginate(req, totalData)
