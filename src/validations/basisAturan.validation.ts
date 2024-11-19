@@ -38,5 +38,10 @@ export const validateBasisAturan = [
         }
       }
       return true
-    })
+    }),
+  body('certaintyFactor')
+    .notEmpty()
+    .withMessage('Certainty Factor wajib diisi.')
+    .isFloat()
+    .withMessage('Certainty Factor harus berupa angka.')
 ]

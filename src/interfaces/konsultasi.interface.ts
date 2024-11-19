@@ -4,7 +4,7 @@ export interface IKonsultasi {
   id: string
   userId: string
   hasil?: JsonValue
-  createdAt: Date
+  tanggalKonsultasi: Date
   user?: {
     id: string
     email: string

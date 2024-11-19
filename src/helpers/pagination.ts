@@ -9,7 +9,7 @@ export interface IPaginationMeta {
 
 export const paginate = (req: Request, totalItems: number) => {
   const page = parseInt(req.query.page as string) || 1
-  const limit = parseInt(req.query.limit as string) || 10
+  const limit = parseInt(req.query.limit as string) || 20
 
   const skip = (page - 1) * limit
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 0

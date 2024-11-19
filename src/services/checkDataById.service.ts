@@ -12,6 +12,13 @@ export const checkDataById = async (id: string, namaTabel: string) => {
           }
         })
         break
+      case 'notification':
+        data = await prisma.notification.findUnique({
+          where: {
+            id
+          }
+        })
+        break
       case 'keahlian':
         data = await prisma.keahlian.findUnique({
           where: {

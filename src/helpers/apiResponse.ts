@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Di sini, T adalah tipe data yang generik, yang artinya kita tidak tahu sebelumnya apa tipe data yang akan dikembalikan (data bisa berupa array, objek, string, dll.). Dengan menggunakan T, kita bisa mendefinisikan bahwa:
 
 // data: T: Argumen data bisa berupa tipe data apa pun (misalnya, array, objek, dll.), dan tipe data ini tetap aman secara tipe.

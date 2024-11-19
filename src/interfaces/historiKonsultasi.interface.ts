@@ -20,5 +20,5 @@ export interface IHistoriKonsultasi {
     name: string
     description: string
   }
-  createdAt: Date
+  tanggalHistoriKonsultasi: Date
 }

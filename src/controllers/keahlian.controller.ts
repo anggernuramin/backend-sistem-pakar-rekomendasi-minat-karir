@@ -7,6 +7,7 @@ import { checkDataById } from '../services/checkDataById.service'
 import { ValidationResultError } from '../interfaces/validation.interface'
 import { paginate } from '../helpers/pagination'
 import { generateCustomId } from '../services/generateCustomId.service'
+import { searching } from '../helpers/searching'
 
 export const getAllKeahlian = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
@@ -24,12 +25,18 @@ export const getAllKeahlian = async (req: Request, res: Response): Promise<any> 
   }
 
   try {
-    const totalKeahlian = await prisma.keahlian.count()
+    const searchQuery = req.query.search as string
+
+    const searchCondtion = searching(searchQuery, 'minat')
+    const totalKeahlian = await prisma.keahlian.count({
+      where: searchCondtion
+    })
     // Ambil nilai pagination dari helper paginate
     const { skip, limit, paginationMeta } = paginate(req, totalKeahlian)
 
     // Ambil data user berdasarkan pagination
     const keahlians = await prisma.keahlian.findMany({
+      where: searchCondtion,
       skip,
       take: limit
     })
@@ -37,6 +44,7 @@ export const getAllKeahlian = async (req: Request, res: Response): Promise<any> 
     const responsiveNames: INameKeahlianResponse[] = keahlians.map((keahlian) => {
       return {
         id: keahlian.id,
+        idKeahlian: keahlian.id,
         nameKeahlian: keahlian.name,
         descriptionKeahlian: keahlian.description
       }
@@ -147,12 +155,12 @@ export const updateKeahlian = async (req: Request, res: Response): Promise<any> 
   } catch (error: any) {
     if (error.code === 'P2002') {
       // Unique constraint violation
-      return res.status(409).send({
-        success: false,
-        statusCode: 409,
-        message: 'Nama Keahlian yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
-        data: null
-      })
+      return errorResponse(
+        res,
+        409,
+        'Nama Keahlian yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain.',
+        error.message
+      )
     }
     return errorResponse(res, 500, 'Failed update keahlian', error.message)
   }

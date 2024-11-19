@@ -12,5 +12,5 @@ MinatRouter.get('/:id', requireRoles(['client', 'admin']), getMinatById)
 
 // memasang 2 middleware yaitu requireAdmin dan validateMinat
 MinatRouter.post('/', validateMinat, requireRoles(['admin']), createMinat)
-MinatRouter.put('/:id', validateMinat, requireRoles(['admin']), updateMinat)
-MinatRouter.delete('/:id', requireRoles(['admin']), deleteMinat)
+MinatRouter.put('/:id', validateMinat, requireRoles(['client', 'admin']), updateMinat)
+MinatRouter.delete('/:id', requireRoles(['client', 'admin']), deleteMinat)

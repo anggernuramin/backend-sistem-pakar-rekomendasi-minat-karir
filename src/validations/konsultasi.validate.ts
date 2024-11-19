@@ -34,5 +34,10 @@ export const validateKonsultasi = [
         }
       }
       return true
-    })
+    }),
+  body('tanggalKonsultasi')
+    .notEmpty()
+    .withMessage('Tanggal Konsultasi wajib diisi.')
+    .matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    .withMessage('Tanggal Konsultasi harus berupa tanggal ISO-8601.')
 ]

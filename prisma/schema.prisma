@@ -26,8 +26,13 @@
     image String?
     role Role
 
-    konsultasi Konsultasi[]
+    konsultasi Konsultasi[] // satu user bisa melakukan lebih dari 1 konsultasi
     historyKonsultasi HistoriKonsultasi[]
+    notification Notification[]
+
+    // token String @db.VarChar(100)  jika ingin spesifik panjang string biasa isinya 100/255
+    // first_name // gunakan tanda _ jika terdapat lebih dari 1 kata
+    // @@map("users") akan menjadi nama table didatabase
   }
 
   model Keahlian {
@@ -46,7 +51,6 @@
 
     basisAturan BasisAturan[]
     historyKonsultasi HistoriKonsultasi[]
-
   }
 
   model Karir {
@@ -60,6 +64,7 @@
 
   model BasisAturan {
     id        String    @id 
+    certaintyFactor Float
     karirId   String
     karir     Karir     @relation(fields: [karirId], references: [id])
     keahlianId String
@@ -73,26 +78,35 @@
     userId String
     user User @relation(fields: [userId], references: [id])
     hasil Json? // jika hasil tidak ada yang cocok maka null
-    createdAt DateTime @default(now())
+    tanggalKonsultasi DateTime
 
     historyKonsultasi HistoriKonsultasi[]
-
   }
 
 
 // menyimpan minat dan keahlian yang dipilih user, dan menampilkan hasil konsultasi sesuai dengan id konsultasi
  model HistoriKonsultasi {
-    id              String @id   
+    id String @id @default(uuid())                
     userId          String
+    konsultasiId    String
     minatId         String
     keahlianId      String
-    konsultasiId    String
-    createdAt       DateTime  @default(now())
+    tanggalHistoriKonsultasi       DateTime  
 
-    user            User      @relation(fields: [userId], references: [id])
+    user            User      @relation(fields: [userId], references: [id]) // satu kode histri konsultasi digunakan untuk menyimpan 1 data user
     konsultasi      Konsultasi @relation(fields: [konsultasiId], references: [id])
     minat           Minat     @relation(fields: [minatId], references: [id])
     keahlian        Keahlian  @relation(fields: [keahlianId], references: [id])
+}
+
+model Notification {
+  id String @id @default(uuid())
+  message String
+  status Boolean
+  userId String
+  tanggal DateTime
+  
+  user            User      @relation(fields: [userId], references: [id])
 }
 
 

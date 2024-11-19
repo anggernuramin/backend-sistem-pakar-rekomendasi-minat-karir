@@ -36,12 +36,12 @@ export const registerUser = async (req: Request, res: Response): Promise<any> =>
 
     // Cek apakah role yang diberikan valid
     if (!['admin', 'client'].includes(req.body.role)) {
-      return res.status(400).send({
-        success: false,
-        statusCode: 400,
-        message: 'Role yang diberikan tidak valid. Hanya "admin" atau "client" yang diizinkan.',
-        data: null
-      })
+      return errorResponse(
+        res,
+        400,
+        'Role yang diberikan tidak valid. Hanya "admin" atau "client" yang diizinkan.',
+        true
+      )
     }
 
     await prisma.user.create({ data: req.body })
@@ -49,14 +49,14 @@ export const registerUser = async (req: Request, res: Response): Promise<any> =>
   } catch (error: any) {
     if (error.code === 'P2002') {
       // Unique constraint violation
-      return res.status(409).send({
-        success: false,
-        statusCode: 409,
-        message: 'Email yang anda gunakan sudah terdaftar di database, gunakan email yang lain',
-        data: null
-      })
+      return errorResponse(
+        res,
+        409,
+        'Email yang anda gunakan sudah terdaftar di database, gunakan email yang lain.',
+        error.message
+      )
     }
-    errorResponse(res, 500, error.message)
+    errorResponse(res, 500, 'Register gagal', error.message)
   }
 }
 
@@ -76,13 +76,13 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     const user: any = await prisma.user.findUnique({ where: { email: req.body.email } })
 
     if (!user) {
-      return errorResponse(res, 401, 'Login gagal, Password atau Email yang anda masukkan salah', [])
+      return errorResponse(res, 401, 'Login gagal, Password atau Email yang anda masukkan salah', true)
     }
 
     const isValidPassword = checkPassword(req.body.password, user.password)
 
     if (!isValidPassword) {
-      return errorResponse(res, 401, 'Login gagal, Password atau Email yang anda masukkan salah', [])
+      return errorResponse(res, 401, 'Login gagal, Password atau Email yang anda masukkan salah', true)
     }
 
     // generate token jika email dan passowrd benar
@@ -119,7 +119,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 
     successResponseLogin<IUser[]>(res, 200, 'User berhasil login', user, token)
   } catch (error: any) {
-    errorResponse(res, 500, error.message)
+    errorResponse(res, 500, 'Login gagal', error.message)
   }
 }
 
@@ -128,24 +128,24 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     const refreshToken = req.cookies.refreshToken
 
     if (!refreshToken) {
-      return errorResponse(res, 401, 'Refresh token tidak tersedia', [])
+      return errorResponse(res, 401, 'Refresh token tidak tersedia', true)
     }
     const verifiedToken = checkToken(refreshToken)
 
     // Pengecekan apakah token valid, tidak expired, dan decoded tidak null dari function checkToken
     if (!verifiedToken.valid || verifiedToken.expired || !verifiedToken.decoded) {
-      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', [])
+      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', true)
     }
 
     // Pastikan verifiedToken.decoded adalah objek dengan id
     const userId = (verifiedToken.decoded as any).id
     if (!userId) {
-      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', [])
+      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', true)
     }
 
     const user: any = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) {
-      return errorResponse(res, 401, 'User tidak ditemukan', [])
+      return errorResponse(res, 401, 'User tidak ditemukan', true)
     }
 
     // Buat access baru ketika user dengan id yang didapat dari encode token ada
@@ -160,7 +160,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     )
     successResponseLogin<IUser[]>(res, 200, 'Token berhasil diperbarui', user, { accessToken: newAccesToken })
   } catch (error: any) {
-    return errorResponse(res, 500, error.message)
+    return errorResponse(res, 500, 'Refresh token gagal', error.message)
   }
 }
 
@@ -169,7 +169,7 @@ export const logoutUser = async (req: Request, res: Response): Promise<any> => {
     res.clearCookie('refreshToken')
     successResponse(res, 200, 'Logout berhasil', [])
   } catch (error: any) {
-    return errorResponse(res, 500, error.message)
+    return errorResponse(res, 500, 'Logout gagal', error.message)
   }
 }
 
@@ -178,28 +178,34 @@ export const checkUser = async (req: Request, res: Response): Promise<any> => {
 
   try {
     if (!currentToken) {
-      return errorResponse(res, 401, 'Token tidak ada', [])
+      return errorResponse(res, 401, 'Token tidak ada', true)
     }
     const validToken = checkToken(currentToken)
 
     // Pengecekan apakah token valid, tidak expired, dan decoded tidak null dari function checkToken
     if (!validToken.valid || validToken.expired || !validToken.decoded) {
-      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', [])
+      return errorResponse(res, 401, 'Refresh token tidak valid atau telah kadaluarsa', true)
     }
 
     // Pastikan verifiedToken.decoded adalah objek dengan id
     const userId = (validToken.decoded as any).id
     if (!userId) {
-      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', [])
+      return errorResponse(res, 401, 'User ID tidak ditemukan dalam token', true)
     }
 
     const dataUser: any = await prisma.user.findUnique({ where: { id: userId } })
-    if (!dataUser) {
-      return errorResponse(res, 401, 'User tidak ditemukan', [])
+
+    const responseDataUser = {
+      ...dataUser,
+      image: dataUser.image ? `${req.protocol}://${req.get('host')}${dataUser.image}` : null
     }
 
-    successResponse<IUser[]>(res, 200, 'User berhasil ditemukan', dataUser)
+    if (!dataUser) {
+      return errorResponse(res, 401, 'User tidak ditemukan', true)
+    }
+
+    successResponse<IUser[]>(res, 200, 'User berhasil ditemukan', responseDataUser)
   } catch (error: any) {
-    return errorResponse(res, 500, error.message)
+    return errorResponse(res, 500, 'Check user gagal', error.message)
   }
 }

@@ -3,10 +3,11 @@ import { UserRouter } from './user.router'
 import { AuthRouter } from './auth.router'
 import { KeahlianRouter } from './keahlian.router'
 import { MinatRouter } from './minat.router'
-import { KarirRouter } from './karir.controller'
 import { BasisAturanRouter } from './basisAturan.router'
 import { KonsultasiRouter } from './konsultasi.router'
 import { HistoriKonsultasiRouter } from './historiKonsultasi.router'
+import { NotificationRouter } from './notification.router'
+import { KarirRouter } from './karir.router'
 
 // main router
 const _routes: Array<[String, Router]> = [
@@ -17,7 +18,8 @@ const _routes: Array<[String, Router]> = [
   ['/api/karir', KarirRouter],
   ['/api/basis-aturan', BasisAturanRouter],
   ['/api/konsultasi', KonsultasiRouter],
-  ['/api/histori-konsultasi', HistoriKonsultasiRouter]
+  ['/api/histori-konsultasi', HistoriKonsultasiRouter],
+  ['/api/notification', NotificationRouter]
 ]
 
 const routes = (app: Application) => {

@@ -7,6 +7,7 @@ import { ValidationResultError } from '../interfaces/validation.interface'
 import { paginate } from '../helpers/pagination'
 import { IMinat, INameMinatResponse } from '../interfaces/minat.interface'
 import { generateCustomId } from '../services/generateCustomId.service'
+import { searching } from '../helpers/searching'
 
 export const getAllMinat = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
@@ -27,14 +28,8 @@ export const getAllMinat = async (req: Request, res: Response): Promise<any> => 
     // Frontend: Gunakan encodeURIComponent() untuk mengencode query string sebelum mengirim permintaan
     // encodeURIComponent(). Ini akan mengubah spasi menjadi %20 dan karakter khusus lainnya menjadi format yang aman
     const searchQuery = req.query.search as string
-    const searchCondtion = searchQuery
-      ? {
-          OR: [
-            // insensitif akan mencari data dengan huruf besar dan kecil
-            { name: { contains: searchQuery, mode: 'insensitive' as const } } // ada keyword name artinya akan mencri berdasarkan keyword name
-          ]
-        }
-      : {}
+
+    const searchCondtion = searching(searchQuery, 'minat')
 
     const totalMinat = await prisma.minat.count({
       where: searchCondtion
@@ -51,6 +46,7 @@ export const getAllMinat = async (req: Request, res: Response): Promise<any> => 
 
     const responsiveNames: INameMinatResponse[] = minats.map((minat) => {
       return {
+        idMinat: minat.id,
         id: minat.id,
         nameMinat: minat.name
       }
@@ -153,12 +149,12 @@ export const updateMinat = async (req: Request, res: Response): Promise<any> => 
   } catch (error: any) {
     if (error.code === 'P2002') {
       // Unique constraint violation
-      return res.status(409).send({
-        success: false,
-        statusCode: 409,
-        message: 'Nama Minat yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
-        data: null
-      })
+      return errorResponse(
+        res,
+        409,
+        'Nama Minat yang anda gunakan sudah ada terdaftar di database, gunakan nama yang lain',
+        error.message
+      )
     }
     return errorResponse(res, 500, 'Failed update minat', error.message)
   }
@@ -179,6 +175,10 @@ export const deleteMinat = async (req: Request, res: Response): Promise<any> => 
     })
     return successResponse<IMinat[]>(res, 200, 'Success delete minat', [])
   } catch (error: any) {
+    // eroro ketika data master masih digunakan di tabel lain
+    if (error.code === 'P2003') {
+      return errorResponse(res, 409, 'Minat masih digunakan di tabel lain', error.message)
+    }
     return errorResponse(res, 500, 'Failed delete minat', error.message)
   }
 }

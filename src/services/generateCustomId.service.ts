@@ -10,22 +10,31 @@ type PrismaModels = {
   konsultasi: Konsultasi
   historiKonsultasi: HistoriKonsultasi
 }
-
 export const generateCustomId = async (modelName: keyof PrismaModels, prefix: string): Promise<string> => {
   let nextNumber = 1 // Default nomor berikutnya
 
   // Ambil entri terakhir dari database untuk menentukan nomor berikutnya
   const lastEntry = await (prisma[modelName] as any).findFirst({
+    where: { id: { startsWith: prefix } }, // Filter untuk ID yang dimulai dengan prefix
     orderBy: { id: 'desc' }
   })
 
   // Jika ada entri terakhir, ambil nomor terakhir dan tingkatkan
   if (lastEntry && lastEntry.id) {
-    const lastNumber = parseInt(lastEntry.id.slice(prefix.length), 10)
-    nextNumber = lastNumber + 1
+    const numericPart = lastEntry.id.slice(prefix.length) // pisahkan bagian numerik dari ID
+    const lastNumber = parseInt(numericPart, 10) // Mengubah ke nomor
+
+    // Jika parsing berhasil, tingkatkan lastNumber untuk mendapatkan nextNumber
+    if (!isNaN(lastNumber)) {
+      nextNumber = lastNumber + 1
+    } else {
+      console.error(`Error parsing last ID ${lastEntry.id} for model ${modelName}`)
+    }
   }
 
-  // Format ID baru
-  return `${prefix}${String(nextNumber).padStart(2, '0')}`
-  //   padstart berfungsi untuk memastikan bahwa ID yang dihasilkan memiliki panjang minimal 2 karakter. Jika panjang ID kurang dari 2 karakter, maka akan ditambahkan karakter '0' di depan hingga mencapai panjang 2. misal '1' -> '01' dan 30 -> '30'.
+  // Atur padding untuk hasilkan ID baru
+  const paddedNumber = nextNumber < 10 ? `0${nextNumber}` : `${nextNumber}`
+
+  // Menghasilkan ID baru
+  return `${prefix}${paddedNumber}`
 }

@@ -8,6 +8,7 @@ import { paginate } from '../helpers/pagination'
 import { generateCustomId } from '../services/generateCustomId.service'
 import { IKonsultasi } from '../interfaces/konsultasi.interface'
 import { createHistoriKonsultasi } from './historiKonsultasi.controller'
+import { createNotification } from './notification.controller'
 
 export const getAllKonsultasi = async (req: Request, res: Response): Promise<any> => {
   // Cek hasil validasi
@@ -57,7 +58,21 @@ export const getKonsultasiById = async (req: Request, res: Response): Promise<an
 }
 
 export const createKonsultasi = async (req: Request, res: Response): Promise<any> => {
+  // Cek validasi
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    const validationErrors: ValidationResultError = {}
+    errors.array().forEach((error) => {
+      if (error.type === 'field') {
+        validationErrors[error.path] = error.msg
+      }
+    })
+
+    return errorResponse(res, 400, 'Validation error', validationErrors)
+  }
+
   const { userId, minatId, keahlianId } = req.body
+  const tanggalKonsultasi = new Date()
 
   // Validasi apakah user ada di database (opsional, jika perlu)
   const user = await checkDataById(userId, 'user')
@@ -123,12 +138,14 @@ export const createKonsultasi = async (req: Request, res: Response): Promise<any
         id: konsultasiId,
         userId,
         hasil: karirPersentase,
-        createdAt: new Date()
+        tanggalKonsultasi: tanggalKonsultasi
       }
     })
 
+    createNotification('Mahasiswa melakukan Konsultasi', false, userId, tanggalKonsultasi)
+
     // Simpan ke tabel historiKonsultasi untuk setiap minat dan keahlian dengan referensi ke konsultasiId
-    createHistoriKonsultasi(minatId, keahlianId, userId, konsultasiId)
+    createHistoriKonsultasi(minatId, keahlianId, userId, konsultasiId, tanggalKonsultasi)
 
     return successResponse(res, 201, 'Konsultasi karir berhasil dilakukan', konsultasiResult)
   } catch (error: any) {
@@ -151,5 +168,57 @@ export const deleteKonsultasi = async (req: Request, res: Response): Promise<any
     return successResponse<IKonsultasi[]>(res, 200, 'Success delete konsultasi', [])
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed delete konsultasi', error.message)
+  }
+}
+
+// Fungsi untuk mendapatkan rekap konsultasi mahasiswa per bulan (dari Januari hingga Desember)
+export const getRekapKonsultasiMahasiswaPerBulan = async (req: Request, res: Response): Promise<any> => {
+  try {
+    // Nama-nama bulan dalam bahasa Indonesia
+    const monthNames = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ]
+
+    // Mengelompokkan data konsultasi berdasarkan tanggal konsultasi
+    const konsultasi = await prisma.konsultasi.groupBy({
+      by: ['tanggalKonsultasi'],
+      _count: { id: true }, // Prisma akan menambahkan sebuah kolom hasil bernama _count, yang akan menyimpan hasil perhitungan jumlah baris dalam setiap grup berdasarkan kolom tanggalKonsultasi.
+      orderBy: { tanggalKonsultasi: 'asc' }
+    })
+
+    // Inisialisasi data bulanan dari Januari hingga Desember dengan nilai 0
+    const monthlyData: Record<string, number> = {}
+    monthNames.forEach((month) => {
+      monthlyData[month] = 0
+    })
+
+    // Mengisi data yang ada dalam hasil query
+    konsultasi.forEach((item) => {
+      const date = new Date(item.tanggalKonsultasi)
+      const monthIndex = date.getMonth() // Mendapatkan index bulan (0 = Januari, 11 = Desember)
+      const monthName = monthNames[monthIndex]
+      monthlyData[monthName] += item._count.id
+    })
+
+    // Memformat hasil ke dalam bentuk yang diinginkan untuk frontend
+    const formattedData = Object.keys(monthlyData).map((month) => ({
+      bulan: month, // Nama bulan
+      totalMahasiswa: monthlyData[month] // Jumlah mahasiswa per bulan
+    }))
+
+    return successResponse(res, 200, 'Success get monthly konsultasi', formattedData)
+  } catch (error: any) {
+    return errorResponse(res, 500, 'Failed to get monthly konsultasi', error.message)
   }
 }
