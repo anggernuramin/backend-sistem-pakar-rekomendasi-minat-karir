@@ -8,6 +8,8 @@ import { validationResult } from 'express-validator'
 import { searching } from '../helpers/searching'
 import { checkToken, hashingPassword } from '../services/password.service'
 import { checkDataById } from '../services/checkDataById.service'
+import path from 'path'
+import fs from 'fs'
 
 export const getAllUsers = async (req: Request, res: Response): Promise<any> => {
   const errors = validationResult(req)
@@ -225,12 +227,26 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   if (!user) {
     return errorResponse(res, 404, 'User not found')
   }
+
   try {
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
+    })
+
+    if (existingUser?.image) {
+      // Hapus file gambar dari file system
+      const userImagePath = path.join(__dirname, '../uploads/users/', existingUser?.image) // Path ke file
+      if (fs.existsSync(userImagePath)) {
+        fs.unlinkSync(userImagePath) // Menghapus file
+      }
+    }
+
     await prisma.user.delete({
       where: {
         id
       }
     })
+
     return successResponse<IUser[]>(res, 200, 'Success delete user', [])
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed delete user', error.message)
