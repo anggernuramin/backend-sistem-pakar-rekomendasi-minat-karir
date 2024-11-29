@@ -8,7 +8,7 @@ import path from 'path'
 import { broadcastNotification } from './sockets/notification.socket'
 
 const app: Application = express()
-const port: number = 3000
+const port: string = process.env.PORT || 'undefined'
 
 // Aktifkan parsing JSON
 app.use(express.json())
