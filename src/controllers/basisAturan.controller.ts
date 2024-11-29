@@ -30,6 +30,9 @@ export const getAllBasisAturan = async (req: Request, res: Response): Promise<an
         karir: true,
         minat: true,
         keahlian: true
+      },
+      orderBy: {
+        karirId: 'asc'
       }
     })
 
@@ -82,13 +85,60 @@ export const getAllBasisAturan = async (req: Request, res: Response): Promise<an
 export const getBasisAturanById = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = req.params.id
-    const basisAturan = await checkDataById(id, 'basisAturan')
+    const basisAturan = await checkDataById(id, 'karir')
 
     if (!basisAturan) {
       return errorResponse(res, 404, 'basis aturan not found')
     }
 
-    return successResponse<any>(res, 200, 'Success get basis aturan', basisAturan)
+    const karir = await prisma.karir.findUnique({ where: { id } })
+    if (!karir) {
+      return errorResponse(res, 404, 'karir not found')
+    }
+
+    const basisAturanByKarir = await prisma.basisAturan.findMany({
+      where: {
+        karirId: id
+      },
+      include: {
+        karir: true,
+        minat: true,
+        keahlian: true
+      }
+    })
+
+    const certaintyFactor = uniqBy(
+      basisAturanByKarir.map((basis) => basis.certaintyFactor),
+      'certaintyFactor'
+    )
+
+    const minat = uniqBy(
+      basisAturanByKarir.map((basis) => ({
+        id: basis.minat.id,
+        name: basis.minat.name
+      })),
+      'id'
+    )
+
+    const keahlian = uniqBy(
+      basisAturanByKarir.map((basis) => ({
+        id: basis.keahlian.id,
+        name: basis.keahlian.name,
+        description: basis.keahlian.description
+      })),
+      'id'
+    )
+
+    const response = {
+      id: basisAturan.id,
+      basisAturansIdKarir: id,
+      basisAturanKarir: karir.name,
+      certaintyFactor: certaintyFactor[0],
+      minat,
+      keahlian
+    }
+
+    return successResponse<any>(res, 200, 'Success get basis aturan', response)
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed get karir', error.message)
   }

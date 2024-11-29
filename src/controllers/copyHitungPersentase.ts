@@ -260,6 +260,7 @@ export const getHasilKonsultasiUser = async (req: Request, res: Response): Promi
     const response = {
       hasilKarir: karir?.name,
       hasilDescriptionKarir: karir?.description,
+      hasilPengembanganKarir: karir?.pengembangan_karir,
       hasilMinat: minat,
       hasilKeahlian: keahlian
     }

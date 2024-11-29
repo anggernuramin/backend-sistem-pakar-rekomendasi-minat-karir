@@ -14,9 +14,9 @@ import { validateKonsultasi } from '../validations/konsultasi.validate'
 import {
   getHasilKonsultasiUser,
   getHasilPercentageKonsultasi,
-  getJawabanKonsultasi,
-  prosesKonsultasiWithForwardChainingAndCertainlyFactor
+  getJawabanKonsultasi
 } from '../controllers/copyHitungPersentase'
+import { prosesKonsultasiWithForwardChainingAndCertainlyFactor } from '../controllers/revisiMetode.controller'
 
 export const KonsultasiRouter: Router = Router()
 
