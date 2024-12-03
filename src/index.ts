@@ -8,14 +8,14 @@ import path from 'path'
 import { broadcastNotification } from './sockets/notification.socket'
 
 const app: Application = express()
-const port: string = process.env.PORT || 'undefined'
+const port: string = process.env.PORT || '3000'
 
 // Aktifkan parsing JSON
 app.use(express.json())
 
 // Konfigurasi opsi CORS tambahkan method patch
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:4173', 'https://self-karir.vercel.app'], // Tentukan domain frontend yang diizinkan
+  origin: ['http://localhost:5173', 'http://localhost:4173', 'https://self-karir.vercel.app', 'http://localhost:5174'], // Tentukan domain frontend yang diizinkan
   credentials: true, // Izinkan kredensial (cookies, header otorisasi, dll.)
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] // Izinkan metode HTTP
 }
