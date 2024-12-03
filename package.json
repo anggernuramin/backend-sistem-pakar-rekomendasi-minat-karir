@@ -11,7 +11,8 @@
     "prepare": "husky",
     "check-types": "tsc --pretty --noEmit",
     "check-format": "prettier --check .",
-    "check-lint": "eslint . "
+    "check-lint": "eslint . ",
+     "postinstall": "prisma generate"
   },
   "husky": {
     "hooks": {
