@@ -20,6 +20,14 @@ npm run check-types || {
     false
 }
 
+
+# Generate Prisma Client
+npx prisma generate || {
+    echo 'Prisma Client generation failed. Check your schema.prisma, add changes, and try commit again.'
+    false
+}
+
+
 # Build apps
 npm run build || {
     echo 'Your build failed, view the error above'

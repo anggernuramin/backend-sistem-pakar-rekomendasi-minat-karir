@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "start": "ts-node -r tsconfig-paths/register src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "format": "prettier --write .",
     "prepare": "husky",
     "check-types": "tsc --pretty --noEmit",
