@@ -1,15 +1,13 @@
 import { Router } from 'express'
 import { requireRoles } from '../middlewares/auth.middleware'
 import {
-  // createBasisAturan,
   deleteBasisAturan,
   getAllBasisAturan,
-  getBasisAturanById
-  // updateBasisAturan
+  getBasisAturanById,
+  createBasisAturanWithCertaintyFactor
 } from '../controllers/basisAturan.controller'
 import { validateBasisAturan } from '../validations/basisAturan.validation'
 import { validatePagination } from '../validations/pagination.validation'
-import { createBasisAturanWithCertaintyFactor } from '../controllers/copyHitungPersentase'
 
 export const BasisAturanRouter: Router = Router()
 

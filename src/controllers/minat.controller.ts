@@ -67,9 +67,9 @@ export const getMinatById = async (req: Request, res: Response): Promise<any> =>
       return errorResponse(res, 404, 'Minat not found')
     }
 
-    return successResponse<any>(res, 200, 'Success get keahlian', minat)
+    return successResponse<any>(res, 200, 'Success get minat', minat)
   } catch (error: any) {
-    return errorResponse(res, 500, 'Failed get keahlian', error.message)
+    return errorResponse(res, 500, 'Failed get minat', error.message)
   }
 }
 

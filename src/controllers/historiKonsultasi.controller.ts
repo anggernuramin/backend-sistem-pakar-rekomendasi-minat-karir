@@ -8,126 +8,8 @@ import { IHistoriKonsultasi } from '../interfaces/historiKonsultasi.interface'
 import { formatDate, formatTime } from '../helpers/format'
 import { paginate } from '../helpers/pagination'
 import { searchingDate } from '../helpers/searching'
-
-export const getAllHistoriKonsultasi = async (req: Request, res: Response): Promise<any> => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    const validationErrors: ValidationResultError = {}
-    errors.array().forEach((error) => {
-      if (error.type === 'field') {
-        validationErrors[error.path] = error.msg
-      }
-    })
-
-    return errorResponse(res, 400, 'Validation query param error', validationErrors)
-  }
-
-  try {
-    const { tanggalAwal, tanggalAkhir } = req.query
-
-    // Cek jika ada query startDate atau endDate, maka masukkan dalam filter
-    const searchDate = searchingDate(tanggalAwal as string, tanggalAkhir as string)
-
-    // Fetch all consultation history with included relationships
-    const historiKonsultasi = await prisma.historiKonsultasi.findMany({
-      where: {
-        ...searchDate
-      },
-      include: {
-        minat: true,
-        keahlian: true,
-        konsultasi: {
-          include: {
-            user: true // Include user information for the related consultations
-          }
-        }
-      },
-      orderBy: {
-        tanggalHistoriKonsultasi: 'desc'
-      }
-    })
-
-    // Ambil semua data karir
-    const allKarir = await prisma.karir.findMany()
-
-    // Kelompokkan berdasarkan konsultasiId
-    const groupedHistori = historiKonsultasi.reduce((acc: any, current: any) => {
-      const { konsultasiId, minat, keahlian, konsultasi } = current
-
-      // Jika kelompok belum ada, buat kelompok baru
-      if (!acc[konsultasiId]) {
-        acc[konsultasiId] = {
-          konsultasiId,
-          hasil: [],
-          minat: [],
-          keahlian: [],
-          konsultasi: konsultasi
-        }
-      }
-
-      // Tambahkan hasil dengan nama karir, hindari duplikat
-      Object.entries(konsultasi.hasil).forEach(([karirId, persentase]) => {
-        // Cari nama karir berdasarkan karirId
-        const karir = allKarir.find((k: any) => k.id === karirId)
-        if (karir && !acc[konsultasiId].hasil.some((item: any) => item.id === karirId)) {
-          acc[konsultasiId].hasil.push({
-            id: karirId,
-            name: karir.name, // Mengganti kode karir dengan nama karir
-            persentase
-          })
-        }
-      })
-
-      // Tambahkan minat jika belum ada
-      if (!acc[konsultasiId].minat.some((item: any) => item.id === minat.id)) {
-        acc[konsultasiId].minat.push({
-          id: minat.id,
-          name: minat.name
-        })
-      }
-
-      // Tambahkan keahlian jika belum ada
-      if (!acc[konsultasiId].keahlian.some((item: any) => item.id === keahlian.id)) {
-        acc[konsultasiId].keahlian.push({
-          id: keahlian.id,
-          name: keahlian.name,
-          description: keahlian.description
-        })
-      }
-
-      return acc
-    }, {})
-
-    // Ubah objek menjadi array
-    const tempData = Object.values(groupedHistori)
-
-    const responseData = tempData.map((item: any) => {
-      const { konsultasiId, hasil, minat, keahlian, konsultasi } = item
-      const waktuKonsultasi = {
-        tanggal: formatDate(konsultasi.tanggalKonsultasi),
-        jam: formatTime(konsultasi.tanggalKonsultasi)
-      }
-      return {
-        nameUserKonsultasi: konsultasi.user.name,
-        konsultasiId,
-        hasil,
-        minatYangDipilih: minat,
-        keahlianYangDipilih: keahlian,
-        tanggalKonsultasi: waktuKonsultasi.tanggal,
-        jamKonsultasi: waktuKonsultasi.jam
-      }
-    })
-
-    // Lakukan pagination pada hasil yang sudah dikelompokkan
-    const totalData = responseData.length
-    const { skip, limit, paginationMeta } = paginate(req, totalData)
-    const paginatedData = responseData.slice(skip, skip + limit)
-
-    return successResponse<any>(res, 200, 'Success get history', paginatedData, paginationMeta)
-  } catch (error: any) {
-    return errorResponse(res, 500, 'Failed get history', error.message)
-  }
-}
+import { groupBy, uniqBy } from 'lodash'
+import { JsonArray } from '@prisma/client/runtime/library'
 
 export const getHasilKonsultasi = async (req: Request, res: Response): Promise<any> => {
   const errors = validationResult(req)
@@ -285,7 +167,7 @@ export const getHasilKonsultasi = async (req: Request, res: Response): Promise<a
   }
 }
 
-export const getAllHistoriKonsultasiByUserId = async (req: Request, res: Response): Promise<any> => {
+export const getHistoriKonsultasiUser = async (req: Request, res: Response): Promise<any> => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     const validationErrors: ValidationResultError = {}
@@ -310,7 +192,7 @@ export const getAllHistoriKonsultasiByUserId = async (req: Request, res: Respons
 
     // Cek jika ada query startDate atau endDate, maka masukkan dalam filter
     const searchDate = searchingDate(tanggalAwal as string, tanggalAkhir as string)
-
+    // Fetch histori konsultasi
     const historiKonsultasi = await prisma.historiKonsultasi.findMany({
       where: {
         userId: id,
@@ -326,84 +208,136 @@ export const getAllHistoriKonsultasiByUserId = async (req: Request, res: Respons
       }
     })
 
-    // cocokkan historikonsultasi dengan konsultasi untuk mengambil hasil konsultasi
+    if (!historiKonsultasi.length) {
+      return successResponse(res, 200, 'No history found', [])
+    }
 
-    // Ambil semua data karir
-    const allKarir = await prisma.karir.findMany()
+    const rekapData = Object.values(groupBy(historiKonsultasi, (histori) => histori.konsultasiId)).map(
+      (groupedHistori) => {
+        const histori = groupedHistori[0] // Take one record per group (since they're grouped by konsultasiId)
 
-    // Kelompokkan berdasarkan konsultasiId
-    const groupedHistori = historiKonsultasi.reduce((acc: any, current: any) => {
-      const { konsultasiId, minat, keahlian, konsultasi } = current
+        const konsultasiHasil = histori.konsultasi.hasil as JsonArray // Ensure it's an array
+        const hasilKarir = Array.isArray(konsultasiHasil)
+          ? konsultasiHasil.map((item: any) => ({
+              karirName: item.karirName,
+              percentage: item.percentage
+            }))
+          : []
 
-      // Jika kelompok belum ada, buat kelompok baru
-      if (!acc[konsultasiId]) {
-        acc[konsultasiId] = {
-          konsultasiId,
-          hasil: [],
-          minat: [],
-          keahlian: [],
-          konsultasi: konsultasi
+        return {
+          minatHistoriKonsultasi: uniqBy(
+            groupedHistori.flatMap((item) => item.minat),
+            'id'
+          ),
+          keahlianHistoriKonsultasi: uniqBy(
+            groupedHistori.flatMap((item) => item.keahlian),
+            'id'
+          ),
+          hasilHistoriKonsultasi: hasilKarir,
+          tanggalHistoriKonsultasi: formatDate(histori.tanggalHistoriKonsultasi),
+          jamHistoriKonsultasi: formatTime(histori.tanggalHistoriKonsultasi)
         }
       }
+    )
 
-      // Tambahkan hasil dengan nama karir, hindari duplikat
-      Object.entries(konsultasi.hasil).forEach(([karirId, persentase]) => {
-        // Cari nama karir berdasarkan karirId
-        const karir = allKarir.find((k: any) => k.id === karirId)
-        if (karir && !acc[konsultasiId].hasil.some((item: any) => item.id === karirId)) {
-          acc[konsultasiId].hasil.push({
-            id: karirId,
-            name: karir.name, // Mengganti kode karir dengan nama karir
-            persentase
-          })
-        }
-      })
+    const totalData = rekapData.length
+    const { skip, limit, paginationMeta } = paginate(req, totalData)
 
-      // Tambahkan minat jika belum ada
-      if (!acc[konsultasiId].minat.some((item: any) => item.id === minat.id)) {
-        acc[konsultasiId].minat.push({
-          id: minat.id,
-          name: minat.name
-        })
-      }
+    if (rekapData.length === 0) {
+      return successResponse(res, 200, 'No history found', [], paginationMeta)
+    }
 
-      // Tambahkan keahlian jika belum ada
-      if (!acc[konsultasiId].keahlian.some((item: any) => item.id === keahlian.id)) {
-        acc[konsultasiId].keahlian.push({
-          id: keahlian.id,
-          name: keahlian.name,
-          description: keahlian.description
-        })
-      }
+    const paginatedData = rekapData.slice(skip, skip + limit)
 
-      return acc
-    }, {})
+    return successResponse(res, 200, 'Success get history', paginatedData, paginationMeta)
+  } catch (error: any) {
+    return errorResponse(res, 500, 'Failed get history', error.message)
+  }
+}
 
-    // Ubah objek menjadi array
-    const tempData = Object.values(groupedHistori)
-
-    const responseData = tempData.map((item: any) => {
-      const { konsultasiId, hasil, minat, keahlian, konsultasi } = item
-      const waktuKonsultasi = {
-        tanggal: formatDate(konsultasi.tanggalKonsultasi),
-        jam: formatTime(konsultasi.tanggalKonsultasi)
-      }
-      return {
-        konsultasiId,
-        hasil,
-        minatYangDipilih: minat,
-        keahlianYangDipilih: keahlian,
-        tanggalKonsultasi: waktuKonsultasi.tanggal,
-        jamKonsultasi: waktuKonsultasi.jam
+export const getAllHistoriKonsultasi = async (req: Request, res: Response): Promise<any> => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    const validationErrors: ValidationResultError = {}
+    errors.array().forEach((error) => {
+      if (error.type === 'field') {
+        validationErrors[error.path] = error.msg
       }
     })
 
-    // Lakukan pagination pada hasil yang sudah dikelompokkan
-    const totalData = responseData.length
-    const { skip, limit, paginationMeta } = paginate(req, totalData)
-    const paginatedData = responseData.slice(skip, skip + limit)
+    return errorResponse(res, 400, 'Validation query param error', validationErrors)
+  }
 
-    return successResponse<any>(res, 200, 'Success get history', paginatedData, paginationMeta)
+  try {
+    const { tanggalAwal, tanggalAkhir } = req.query
+
+    // Cek jika ada query startDate atau endDate, maka masukkan dalam filter
+    const searchDate = searchingDate(tanggalAwal as string, tanggalAkhir as string)
+    // Fetch histori konsultasi
+    const historiKonsultasi = await prisma.historiKonsultasi.findMany({
+      where: {
+        ...searchDate
+      },
+      include: {
+        user: true,
+        minat: true,
+        keahlian: true,
+        konsultasi: true
+      },
+      orderBy: {
+        tanggalHistoriKonsultasi: 'desc'
+      }
+    })
+
+    if (!historiKonsultasi.length) {
+      return successResponse(res, 200, 'No history found', [])
+    }
+
+    const rekapData = Object.values(groupBy(historiKonsultasi, (histori) => histori.konsultasiId)).map(
+      (groupedHistori) => {
+        const histori = groupedHistori[0] // Take one record per group (since they're grouped by konsultasiId)
+
+        const konsultasiHasil = histori.konsultasi.hasil as JsonArray // Ensure it's an array
+        const hasilKarir = Array.isArray(konsultasiHasil)
+          ? konsultasiHasil.map((item: any) => ({
+              karirName: item.karirName,
+              percentage: item.percentage
+            }))
+          : []
+
+        return {
+          userHistoriKonsultasi: uniqBy(
+            groupedHistori.flatMap((item) => item.user),
+            'id'
+          ), //Fungsi flatMap pertama-tama akan memetakan setiap elemen di groupedHistori ke dalam array item.user milik objek tersebut.
+          //Setelah itu, flatMap akan meratakan (flatten) array-array yang dihasilkan menjadi satu array datar.
+          minatHistoriKonsultasi: uniqBy(
+            groupedHistori.flatMap((item) => item.minat),
+            'id'
+          ),
+          keahlianHistoriKonsultasi: uniqBy(
+            groupedHistori.flatMap((item) => item.keahlian),
+            'id'
+          ),
+          hasilHistoriKonsultasi: hasilKarir,
+          tanggalHistoriKonsultasi: formatDate(histori.tanggalHistoriKonsultasi),
+          jamHistoriKonsultasi: formatTime(histori.tanggalHistoriKonsultasi)
+        }
+      }
+    )
+
+    const totalData = rekapData.length
+    console.log('🚀 ~ getHistoriKonsultasiUser ~ totalData:', totalData)
+    const { skip, limit, paginationMeta } = paginate(req, totalData)
+
+    if (rekapData.length === 0) {
+      console.log('🚀 ~ getHistoriKonsultasiUser ~ paginationMeta:', paginationMeta)
+      return successResponse(res, 200, 'No history found', [], paginationMeta)
+    }
+
+    const paginatedData = rekapData.slice(skip, skip + limit)
+
+    return successResponse(res, 200, 'Success get history', paginatedData, paginationMeta)
   } catch (error: any) {
     return errorResponse(res, 500, 'Failed get history', error.message)
   }
